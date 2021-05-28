@@ -1,13 +1,15 @@
 #!/bin/bash
-[[ $1 == "-d" ]] && set -x; date || echo
+#Debug mode
+[[ $1 == "-d" ]] && set -x; date
 
 # VARS
 BUCKET="mbp-de-antonio"
 
 # FUNC
 newHash() {
-    echo `gsutil stat gs://${BUCKET}/exemplo01.c | grep md5 | awk '{print $3}'`> /tmp/NHASH.lock
-}
+    echo `gsutil stat gs://${BUCKET}/${BUCKET}.conf | grep md5 | awk '{print $3}'`> /tmp/NHASH.lock
+    [[ $? -eq 0 ]] && exit 1
+}e
 
 checkHash() {
     newHash
@@ -34,10 +36,12 @@ proxyRun() {
     for LINE in $(cat /tmp/${BUCKET}.conf);
     do
         /usr/local/bin/cloud_sql_proxy -h | head -n2
+        [[ $? -eq 0 ]] && exit 1
     done
 }
 
 # RUNNING
 [[ -f /tmp/NHASH.lock ]] && echo || download
+# Pega um novo Hash
 newHash
 [[ $(cat /tmp/NHASH.lock) == $(cat /tmp/OHASH.lock) ]] && echo 1 || checkHash
